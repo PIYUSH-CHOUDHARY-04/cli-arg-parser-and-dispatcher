@@ -1,4 +1,4 @@
-##CLI Argument Dispatcher##
+#CLI Argument Dispatcher#
 
 A lightweight, efficient, and easily extensible command line argument dispatcher in C, designed to simplify and streamline the parsing and handling of CLI arguments in your applications.
 Overview
