@@ -72,9 +72,11 @@ gcc -o myapp test.c cli_arg_proc.c
 
 ```bash
 ./myapp -addaccount
+./myapp -opt1=value
 ```
 
 If invalid or duplicate arguments are passed, the program will display informative messages explaining the issue.
+Stick to the usage of passing arguments having key value pairs as given in second example i.e. -opt=value instead of -opt value, though both are true typically but parsing in both sense makes library heavier and needs some more functionalities to be added like in case two different key options are used but they have same values.
 
 ---
 
