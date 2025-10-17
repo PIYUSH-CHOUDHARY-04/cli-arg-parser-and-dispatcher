@@ -6,7 +6,7 @@ A lightweight, efficient, and easily extensible command line argument dispatcher
 
 This project provides a modular framework to:
 
-* Define and register CLI arguments alongside their handler functions
+* Define and register CLI arguments of switch type only (--switch) alongside their handler functions
 * Validate arguments at runtime for correctness and duplication
 * Dispatch the correct handler based on the input arguments
 * Provide clear, informative error handling with detailed messages
