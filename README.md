@@ -66,10 +66,9 @@ Standardized return codes allow precise error detection:
 | Code | Meaning                  |
 |------|-------------------------|
 | 0    | Success                 |
-| -1   | Extra arguments passed  |
-| -2   | Invalid argument        |
-| -3   | Duplicate argument      |
-| -4   | Handler function failed |
+| -1   | Invalid argument        |
+| -2   | Duplicate argument      |
+| -3   | Handler function failed |
 
 All errors are accompanied by **descriptive messages** to guide users.
 
