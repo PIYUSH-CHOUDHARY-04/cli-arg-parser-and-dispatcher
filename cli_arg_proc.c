@@ -3,9 +3,9 @@
 /**
  * @brief Variable initialization
  */
-const char* cli_arg_table[CLI_ARG_COUNT]={ARG1, ARG2, ARG3};
-const int cli_args_size[CLI_ARG_COUNT]={SIZEOF_CSTR(ARG1), SIZEOF_CSTR(ARG2), SIZEOF_CSTR(ARG3)};
-const int (*fptr_arr[CLI_ARG_COUNT])(void*)={func_arg1, func_arg2, func_arg3};
+const char* cli_arg_table[CLI_ARG_COUNT]={ARG1, ARG2, ARG3};	// add ARGn as more CLI args are needed
+const int cli_args_size[CLI_ARG_COUNT]={SIZEOF_CSTR(ARG1), SIZEOF_CSTR(ARG2), SIZEOF_CSTR(ARG3)};	// add more size values of ARGn as more CLI args are needed
+const int (*fptr_arr[CLI_ARG_COUNT])(void*)={func_arg1, func_arg2, func_arg3};	// add more handlers as more CLI args are needed
 
 /**
  * @brief Adds more google drive account for uploading to different drives
@@ -35,15 +35,16 @@ int cli_arg_dispatcher_lib(int argc, char** argv){
 		return 0;
 	}
 
-/*
 	if((argc-1)>CLI_ARG_COUNT){
+#if COMPILE_FLAG0 == LOGGING	
 		printf("Maximum argument supported : %d, Given : %d\n", CLI_ARG_COUNT, argc-1);
+#endif
 		return EXTRAARG;
 	}
-*/	
+#if COMPILE_FLAG0 == LOGGING	
 	printf("relation array being created...\n");
-
-	char relation[argc-1];
+#endif
+	char relation[CLI_ARG_COUNT];
         memset(relation, 0x00, argc-1);	
 	// this array's elements in sequence represents the index in cli_arg_table and the values stored in the array represents the index in argv
 
@@ -55,10 +56,14 @@ int cli_arg_dispatcher_lib(int argc, char** argv){
 	char unknown_arg_tracer=0;
 	char dupl_arg_found_flag=0;
 	for(int i=0;i<argc-1;i++){
+#if COMPILE_FLAG0 == LOGGING
 		printf("parsing argv[%d] : %s ...\n",i+1,argv[i+1]);
+#endif		
 		valid_arg_tracer=0;
 		for(int j=0;j<CLI_ARG_COUNT;j++){
+#if COMPILE_FLAG0 == LOGGING		
 			printf("comparing argv[%d] %s with cli_arg_table[%d] %s...\n", i+1, argv[i+1], j, cli_arg_table[j]);
+#endif
 			if(strncmp(argv[i+1], cli_arg_table[j], cli_args_size[j])==0){
 				// CLI arg string matched, i_th arg from the list of cli provided arg list is correct.
 				valid_arg_tracer=1;
@@ -73,6 +78,7 @@ int cli_arg_dispatcher_lib(int argc, char** argv){
 					dupl_arg_found_flag++;
 					// setting index_in_cli_arg_table_dupl
 					if(relation[j]>0){ relation[j]=(-1)*relation[j]; }
+					// not touching if relation[j] < 0, this already mean one time duplication, no need for further consideration because even one duplication will not give success in function's return value
 				}	
 				
 				break;
@@ -80,10 +86,17 @@ int cli_arg_dispatcher_lib(int argc, char** argv){
 		}
 		if(valid_arg_tracer!=1){	
 		// entire array searched, but CLI arg doesnt matched, thus invalid CLI arg
+#if COMPILE_FLAG0 == LOGGING
 			printf("Unknown argument %d : %s\n", i+1, argv[i+1]);
+#endif
 			unknown_arg_tracer++;
+#if COMPILE_FLAG == NO_LOGGING
+			return EINVALARG;
+#endif
 		}
 	}
+
+#if COMPILE_FLAG0 == LOGGING
 	if(unknown_arg_tracer!=0){
 		printf("Total unknown arguments : %d\n",unknown_arg_tracer);
 		printf("Accepted CLI arguments are listed below :\n[\n");
@@ -91,53 +104,66 @@ int cli_arg_dispatcher_lib(int argc, char** argv){
 			printf("[*] %s\n",cli_arg_table[k]);
 		}
 		printf("]\n");
-		// return EINVALARG;
+		return EINVALARG;
 	}
+#endif
+
+
 	if(dupl_arg_found_flag!=0){
+#if COMPILE_FLAG0 == LOGGING
 		printf("Duplicated argument found : \n");
 		for(int l=0;l<CLI_ARG_COUNT;l++){
 			if((relation[l]<0)){
 				printf("%s\n",cli_arg_table[l]);
 			}
 		}
+#endif
 		return EDUPLARG;
 	}
 
+#if COMPILE_FLAG0 == LOGGING
 	printf("dispatching...\n");
 	
 	
 	for(int p=0;p<CLI_ARG_COUNT;p++){
 		printf("relation[%d] : %d\n", p, relation[p]);
 	}
-	
-	// all CLI args parsed, corresponding indices are stored in index_in_cli_arg_table
-	for(int m=0;m<argc-1;m++){
+#endif
+	// all CLI args parsed, corresponding back relations are stored in relation array
+	for(int m=0;m<CLI_ARG_COUNT;m++){
 		if(relation[m]>0){
 
+#if COMPILE_FLAG0 == LOGGING
 			printf("current iter index in argv : %d\n", m);
 			// corresponding index in argv found, executing the handler.
 			// now checking whether the provided arg is switch or a variable type i.e. -switch or -var=X
-
+#endif
 			if(strlen(argv[relation[m]])==cli_args_size[m]){
 				// its a switch, executing handler as is
+#if COMPILE_FLAG0 == LOGGING
 				printf("dispatching handler for switch %s...\n", argv[relation[m]]);
+#endif
 				if((fptr_arr[m])(NULL)!=0){
+#if COMPILE_FLAG0 == LOGGING
 					printf("Handler ar index %d and address %p failed.\n", m, fptr_arr[m]);
+#endif
 					return EHANDLER;
 				}
 				continue;
-			}
+			}else{
 			
 			// its not a switch, value based arg i.e. -var=X
-			
-			printf("dispatching handler for var_arg %s...\n", argv[relation[m]]);
-			if(((fptr_arr[m])((void*)(argv[relation[m]]+cli_args_size[m]+1) )!=0)){
+#if COMPILE_FLAG0 == LOGGING			
+				printf("dispatching handler for var_arg %s...\n", argv[relation[m]]);
+#endif
+				if(((fptr_arr[m])((void*)(argv[relation[m]]+cli_args_size[m]+1) )!=0)){
 				// +1 to make the pointer to point beyond '=' i.e. to next char whatever it is
-				printf("Handler at index %d and address %p failed.\n", m, fptr_arr[m]);
-			
+#if COMPILE_FLAG0 == LOGGING
+					printf("Handler at index %d and address %p failed.\n", m, fptr_arr[m]);
+#endif
+					return E_HANDLER;
+				}
 			}
-
-
 		}
 	}
 
