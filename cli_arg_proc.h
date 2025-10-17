@@ -71,7 +71,7 @@ int func_arg3(void*);
  * @param param2 passes the pointer to the argument string array
  * @return returns 0 on success else failed
  */
-int cli_arg_dispatcher_lib(int argc, char** argv);
+int cli_arg_dispatcher(int argc, char** argv);
 
 #endif /**< __CLI_ARG_PROC_H__ */
 

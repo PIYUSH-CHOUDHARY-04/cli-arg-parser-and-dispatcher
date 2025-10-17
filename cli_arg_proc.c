@@ -29,7 +29,7 @@ int func_arg3(void*){ printf("Hello from func_arg3\n"); return 0; }
  * @param param2 passes the pointer to the argument string array
  * @return returns 0 on success else failed
  */
-int cli_arg_dispatcher_lib(int argc, char** argv){
+int cli_arg_dispatcher(int argc, char** argv){
 	// need to read from the second argument since first one always the name of the program itself.
 	if(argc<=1){
 		return 0;
