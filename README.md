@@ -1,93 +1,63 @@
-# CLI Argument Dispatcher
+CLI Argument Dispatcher Library
 
-A lightweight, efficient, and easily extensible command line argument dispatcher in C, designed to simplify and streamline the parsing and handling of CLI arguments in your applications.
+A robust, lightweight, and extensible command line argument dispatcher in C, designed to efficiently parse, validate, and handle CLI arguments with minimal overhead while supporting both switch-type and value-based arguments.
 
-## Overview
+Overview
 
-This project provides a modular framework to:
+This library provides a structured framework to:
 
-* Define and register CLI arguments of switch type only (--switch) alongside their handler functions
-* Validate arguments at runtime for correctness and duplication
-* Dispatch the correct handler based on the input arguments
-* Provide clear, informative error handling with detailed messages
+Define and register CLI arguments (-arg, -arg=X) and their corresponding handler functions.
 
-## Features & Advantages
+Validate arguments for correctness and detect duplicates before execution.
 
-### 1. **Bitmask-Based Argument Tracking**
+Dispatch the correct handler functions based on the passed arguments.
 
-The dispatcher uses bitmasking to efficiently track which CLI arguments have been passed and detect duplicates without repeated string comparisons. This ensures:
+Provide clear, descriptive error messages for invalid, unknown, or duplicate arguments.
 
-* **Fast lookups** even with many arguments
-* **Minimal overhead** compared to iterative search methods
+Features & Advantages
+1. Efficient Argument Tracking
 
-### 2. **Pre-Validation Before Execution**
+Uses a lightweight array-based “relation” system to:
 
-All arguments are validated before any handler runs, preventing inconsistent states caused by invalid or duplicate arguments.
+Track which arguments are present
 
-### 3. **Clear Error Codes and Messaging**
+Detect duplicates
 
-Standardized return codes and descriptive error messages allow easy integration with other systems and better user feedback.
+Avoid repeated string comparisons
 
-### 4. **Extensible and Maintainable**
+This ensures fast argument validation and dispatch even for multiple CLI arguments.
 
-Adding new arguments and handlers requires only:
+2. Switch and Value-Based Argument Support
 
-* Updating the `cli_arg_table` with the new argument string
-* Adding the corresponding handler function to the function pointer array
+Supports two types of arguments:
 
-No complex parser generators or external dependencies are needed.
+Switch arguments: -arg1
+→ Executes the handler directly.
 
-### 5. **No Dependency on External Libraries**
+Value-based arguments: -arg2=X
+→ Passes the value X to the handler for processing (supports int, float, string, etc.).
 
-Pure C implementation with standard library headers only (`stdio.h` and `string.h`), making it portable and easy to embed in any project.
+This allows flexible and dynamic argument handling without complicating the library.
 
-### 6. **Controlled Argument Limits**
+3. Pre-Validation Before Execution
 
-Supports defining a maximum number of allowed CLI arguments, preventing misuse or unexpected inputs.
+All arguments are validated before any handler runs:
 
----
+Detects unknown arguments
 
-## Comparison with Existing Approaches
+Detects duplicates
 
-| Aspect                | This Project                    | Typical Alternatives             |
-| --------------------- | ------------------------------- | -------------------------------- |
-| Parsing Method        | Bitmask + direct string match   | Loop with repeated strcmp calls  |
-| Duplication Detection | Built-in bitmask flags          | Often overlooked or manual       |
-| Extensibility         | Simple array updates            | May require complex parser rules |
-| Dependencies          | None (standard C only)          | Often rely on getopt, argp, etc. |
-| Error Handling        | Explicit error codes + messages | Sometimes silent or less clear   |
-| Performance           | Low overhead, fast dispatch     | Higher overhead due to parsing   |
+Provides comprehensive error messages
 
----
+This prevents inconsistent program states and ensures robust operation.
 
-## Getting Started
+4. Clear Error Codes and Messaging
 
-### Build
+Standardized return codes allow precise error detection:
 
-```bash
-gcc -o myapp test.c cli_arg_proc.c
-```
-
-### Usage
-
-```bash
-./myapp -addaccount
-./myapp -opt1=value
-```
-
-If invalid or duplicate arguments are passed, the program will display informative messages explaining the issue.
-Stick to the usage of passing arguments having key value pairs as given in second example i.e. -opt=value instead of -opt value, though both are true typically but parsing in both sense makes library heavier and needs some more functionalities to be added like in case two different key options are used but they have same values.
-
----
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-## Contributions & Feedback
-
-Contributions, bug reports, and suggestions are welcome! Feel free to open issues or pull requests.
-
----
+Code	Meaning
+0	Success
+-1	Extra arguments passed
+-2	Invalid argument
+-3	Duplicate argument
+-4	Handler function failed
