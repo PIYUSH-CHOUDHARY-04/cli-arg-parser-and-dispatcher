@@ -35,7 +35,6 @@
  * @brief General and function specific macros
  */
 // General macros
-#define MAX_CLI_ARGS	32
 #define CLI_ARG_COUNT	3
 
 // Arg macros
@@ -52,11 +51,11 @@
 /**
  * @brief Variable declarations
  */
-extern const char* cli_arg_table[CLI_ARG_COUNT];
+extern const char* cli_arg_table[CLI_ARG_COUNT];    // array to hold ARGn strings
 extern const int (*fptr_arr[CLI_ARG_COUNT])(void*); // array of function pointers
 
 /**
- * @brief Adds more google drive account for uploading to different drives
+ * @brief Adds more handler prototypes
  * @return returns 0 on success
  */
 int func_arg1(void*);
@@ -75,7 +74,7 @@ int func_arg3(void*);
  * @param param2 passes the pointer to the argument string array
  * @return returns 0 on success else failed
  */
-int cli_arg_dispatcher_lib(int argc, char** argv);
+int cli_arg_dispatcher(int argc, char** argv);
 
 #endif /**< __CLI_ARG_PROC_H__ */
 

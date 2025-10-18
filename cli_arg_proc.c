@@ -3,9 +3,9 @@
 /**
  * @brief Variable initialization
  */
-const char* cli_arg_table[CLI_ARG_COUNT]={ARG1, ARG2, ARG3};
-const int cli_args_size[CLI_ARG_COUNT]={SIZEOF_CSTR(ARG1), SIZEOF_CSTR(ARG2), SIZEOF_CSTR(ARG3)};
-const int (*fptr_arr[CLI_ARG_COUNT])(void*)={func_arg1, func_arg2, func_arg3};
+const char* cli_arg_table[CLI_ARG_COUNT]={ARG1, ARG2, ARG3};	// add ARGn as more CLI args are needed
+const int cli_args_size[CLI_ARG_COUNT]={SIZEOF_CSTR(ARG1), SIZEOF_CSTR(ARG2), SIZEOF_CSTR(ARG3)};	// add more size values of ARGn as more CLI args are needed
+const int (*fptr_arr[CLI_ARG_COUNT])(void*)={func_arg1, func_arg2, func_arg3};	// add more handlers as more CLI args are needed
 
 /**
  * @brief Adds more google drive account for uploading to different drives
@@ -29,7 +29,7 @@ int func_arg3(void*){ printf("Hello from func_arg3\n"); return 0; }
  * @param param2 passes the pointer to the argument string array
  * @return returns 0 on success else failed
  */
-int cli_arg_dispatcher_lib(int argc, char** argv){
+int cli_arg_dispatcher(int argc, char** argv){
 	// need to read from the second argument since first one always the name of the program itself.
 	if(argc<=1){
 		return 0;
@@ -75,6 +75,7 @@ int cli_arg_dispatcher_lib(int argc, char** argv){
 					dupl_arg_found_flag++;
 					// setting index_in_cli_arg_table_dupl
 					if(relation[j]>0){ relation[j]=(-1)*relation[j]; }
+					// not touching if relation[j] < 0, this already mean one time duplication, no need for further consideration because even one duplication will not give success in function's return value
 				}	
 				
 				break;
@@ -83,8 +84,13 @@ int cli_arg_dispatcher_lib(int argc, char** argv){
 #if COMPILE_FLAG0 == LOGGING
 		if(valid_arg_tracer!=1){	
 		// entire array searched, but CLI arg doesnt matched, thus invalid CLI arg
+#if COMPILE_FLAG0 == LOGGING
 			printf("Unknown argument %d : %s\n", i+1, argv[i+1]);
+#endif
 			unknown_arg_tracer++;
+#if COMPILE_FLAG == NO_LOGGING
+			return EINVALARG;
+#endif
 		}
 #endif
 	}
