@@ -34,18 +34,13 @@ int cli_arg_dispatcher(int argc, char** argv){
 	if(argc<=1){
 		return 0;
 	}
-
-	if((argc-1)>CLI_ARG_COUNT){
-#if COMPILE_FLAG0 == LOGGING	
-		printf("Maximum argument supported : %d, Given : %d\n", CLI_ARG_COUNT, argc-1);
-#endif
-		return EXTRAARG;
-	}
-#if COMPILE_FLAG0 == LOGGING	
+	
+#if COMPILE_FLAG0 == LOGGING
 	printf("relation array being created...\n");
 #endif
+	
 	char relation[CLI_ARG_COUNT];
-        memset(relation, 0x00, argc-1);	
+        memset(relation, 0x00, CLI_ARG_COUNT);	
 	// this array's elements in sequence represents the index in cli_arg_table and the values stored in the array represents the index in argv
 
 
@@ -53,15 +48,17 @@ int cli_arg_dispatcher(int argc, char** argv){
 	// let's first validate all the CLI args to avoid any inconsistent program state if any one of the cli arg is wrong in multi arg passing, while validating, we'll store the index of the matched string so that later we can just lookup and dispatch without re-parsing the entire CLI args with cli_arg_table
 
 	char valid_arg_tracer=0;
+#if COMPILE_FLAG0 == LOGGING
 	char unknown_arg_tracer=0;
+#endif
 	char dupl_arg_found_flag=0;
 	for(int i=0;i<argc-1;i++){
 #if COMPILE_FLAG0 == LOGGING
 		printf("parsing argv[%d] : %s ...\n",i+1,argv[i+1]);
-#endif		
+#endif
 		valid_arg_tracer=0;
 		for(int j=0;j<CLI_ARG_COUNT;j++){
-#if COMPILE_FLAG0 == LOGGING		
+#if COMPILE_FLAG0 == LOGGING
 			printf("comparing argv[%d] %s with cli_arg_table[%d] %s...\n", i+1, argv[i+1], j, cli_arg_table[j]);
 #endif
 			if(strncmp(argv[i+1], cli_arg_table[j], cli_args_size[j])==0){
@@ -84,6 +81,7 @@ int cli_arg_dispatcher(int argc, char** argv){
 				break;
 			}
 		}
+#if COMPILE_FLAG0 == LOGGING
 		if(valid_arg_tracer!=1){	
 		// entire array searched, but CLI arg doesnt matched, thus invalid CLI arg
 #if COMPILE_FLAG0 == LOGGING
@@ -94,8 +92,8 @@ int cli_arg_dispatcher(int argc, char** argv){
 			return EINVALARG;
 #endif
 		}
+#endif
 	}
-
 #if COMPILE_FLAG0 == LOGGING
 	if(unknown_arg_tracer!=0){
 		printf("Total unknown arguments : %d\n",unknown_arg_tracer);
@@ -104,12 +102,10 @@ int cli_arg_dispatcher(int argc, char** argv){
 			printf("[*] %s\n",cli_arg_table[k]);
 		}
 		printf("]\n");
-		return EINVALARG;
 	}
 #endif
-
-
 	if(dupl_arg_found_flag!=0){
+
 #if COMPILE_FLAG0 == LOGGING
 		printf("Duplicated argument found : \n");
 		for(int l=0;l<CLI_ARG_COUNT;l++){
@@ -123,14 +119,15 @@ int cli_arg_dispatcher(int argc, char** argv){
 
 #if COMPILE_FLAG0 == LOGGING
 	printf("dispatching...\n");
-	
-	
+#endif	
+
+#if COMPILE_FLAG0 == LOGGING
 	for(int p=0;p<CLI_ARG_COUNT;p++){
 		printf("relation[%d] : %d\n", p, relation[p]);
 	}
-#endif
-	// all CLI args parsed, corresponding back relations are stored in relation array
-	for(int m=0;m<CLI_ARG_COUNT;m++){
+#endif	
+	// all CLI args parsed, corresponding indices are stored in index_in_cli_arg_table
+	for(int m=0;m<argc-1;m++){
 		if(relation[m]>0){
 
 #if COMPILE_FLAG0 == LOGGING
@@ -152,20 +149,21 @@ int cli_arg_dispatcher(int argc, char** argv){
 				continue;
 			}else{
 			
-			// its not a switch, value based arg i.e. -var=X
-#if COMPILE_FLAG0 == LOGGING			
+				// its not a switch, value based arg i.e. -var=X
+#if COMPILE_FLAG0 == LOGGING
 				printf("dispatching handler for var_arg %s...\n", argv[relation[m]]);
 #endif
 				if(((fptr_arr[m])((void*)(argv[relation[m]]+cli_args_size[m]+1) )!=0)){
-				// +1 to make the pointer to point beyond '=' i.e. to next char whatever it is
+					// +1 to make the pointer to point beyond '=' i.e. to next char whatever it is
 #if COMPILE_FLAG0 == LOGGING
 					printf("Handler at index %d and address %p failed.\n", m, fptr_arr[m]);
 #endif
 					return E_HANDLER;
 				}
+
 			}
 		}
 	}
-
 	return 0;
 }
+

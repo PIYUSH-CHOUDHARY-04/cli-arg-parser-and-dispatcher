@@ -1,23 +1,27 @@
 #ifndef __CLI_ARG_PROC_H__
 #define __CLI_ARG_PROC_H__
 
-#define COMPILE_FLAG0	NO_LOGGING	// NO_LOGGING (for disabling printf() statements to use in program) or LOGGING (for keeping printf() statements for debugging)
+#define COMPILE_FLAG0	NOLOGGING	// LOGGING (allows execution of printf() statements for debugging) or NOLOGGING (removes the printf() and relevant debugging ceode from being compiled)
 
 /**
  * @file cli_arg_proc.h
- * @brief Declares prototypes for command line argument handling of type switches (-switch) and key-value pairs (-key=value), 
+ * @brief Declares prototypes for command line argument handling of type switches (-switch) and key-value pairs (-key=value) for you library
  * 	  let's have a brief look at how the CLI args are passed to the program :
  * 	  Any option passed must be of form '-arg' and for input with argument, use the form '-arg=X', X can be anything like float or string or int etc
- * 	  
+ *
  * 	  User can add custom CLI arguments and handlers for them as follow:
  *
  * 	  [#] In cli_arg_proc.h file, increase the CLI_ARG_COUNT macro value by the units you of CLI args to be added
- * 	  [#] Add ARGn macro in cli_arg_proc.h file as the CLI arg string (for both switches and key=value pairs, just write the arg string as "-argX", arg type differentiating logic is taken care of)
+ * 	  [#] Add ARGn macro in cli_arg_proc.h file as the CLI arg string (for both switches and key=value pairs, just write the arg string as "-lib-argX", arg type differentiating logic is taken care of)
  * 	  [#] In cli_arg_proc.c (i.e. in this file), add ARGn macro in the cli_arg_table array
  * 	  [#] In cli_arg_proc.c (i.e. in this file), add SIZEOF_CSTR(ARGn) in cli_arg_size array
  * 	  [#] In cli_arg.proc.h file, add function prototype with syntax int func_argn(void*), function name can be though of choice but for easy tracking, its good to be indexed
  * 	  [#] In cli_arg_proc.c (i.e. in this file), add definition of the func_argn handler declared in cli_arg_proc.h
  * 	  [#] In cli_arg_proc.c (i.e. in this file), add func_argn function pointer in fptr_arr array
+ *
+ *
+ * 	  Note that the library specific CLI ARGs must be as "-lib-ARGn" i.e. "-lib-" must be used at the beginning of the ARGn for clear distinction from typical user program specific CLI ARGs, 
+ * 	  hence, avoid using the ARGS starting like "-lib-" for you user programs for both safety and understanding point of view
  *
  */
 
@@ -41,9 +45,8 @@
 #define SIZEOF_CSTR(x) (sizeof(x)-(1))  // excluding the null terminator from string length to get char only size 
 
 // cli_arg_dispatcher :
-#define EINVALARG	-1
-#define EDUPLARG	-2
-#define EHANDLER	-3
+#define EDUPLARG	-1
+#define EHANDLER	-2
 
 /**
  * @brief Variable declarations
