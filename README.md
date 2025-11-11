@@ -33,12 +33,12 @@ handlers.c          # Handler function implementations and private definitions
 
 ### Responsibilities
 
-| File | Responsibility | Notes |
-|------|----------------|-------|
-| `cli_arg_proc.h` | Declares `cli_arg_dispatcher()`; guides users on customization | Public API |
-| `cli_arg_proc.c` | Implements parsing, validation, and dispatch; contains private structs and macros | Internal logic |
-| `handlers.h` | Exposes handler prototypes, shared macros (`LOG_ENABLE`) and generic error codes | Shared between dispatcher and handlers |
-| `handlers.c` | Implements handler functions and private macros/variables | Private to handler logic |
+| File             | Responsibility                                                                     | Notes                                   |
+|------------------|------------------------------------------------------------------------------------|-----------------------------------------|
+| `cli_arg_proc.h` | Declares `cli_arg_dispatcher()`; guides users on customization                     |               Public API                |
+| `cli_arg_proc.c` | Implements parsing, validation, and dispatch; contains private structs and macros  |              Internal logic             |
+| `handlers.h`     | Exposes handler prototypes, shared macros (`LOG_ENABLE`) and generic error codes   | Shared between dispatcher and handlers  |
+| `handlers.c`     | Implements handler functions and private macros/variables                          |          Private to handler logic       |
 
 ---
 
@@ -66,10 +66,10 @@ The dispatcher works in **four stages**:
 
 ## Argument Format
 
-| Type | Example | Passed to Handler |
-|------|---------|-----------------|
-| Switch | `-arg1` | `NULL` |
-| Key-Value | `-arg2=value` | Pointer to `"value"` |
+| Type       | Example        | Passed to Handler    |
+|------------|----------------|----------------------|
+| Switch     |    `-arg1`     |        `NULL`        |
+| Key-Value  | `-arg2=value`  | Pointer to `"value"` |
 
 ---
 
@@ -179,7 +179,7 @@ static struct argbox ARGS[CLI_ARG_COUNT] = {
 
 | Code           | Macro         | Meaning                                                              |
 | -------------- | ------------- | -------------------------------------------------------------------- |
-| 0              | Success       | All arguments processed successfully                                 |
+|  0             | Success       | All arguments processed successfully                                 |
 | -1             | `EINVALARG`   | Unknown/invalid argument                                             |
 | -2             | `EARGMISUSED` | Argument used more than allowed                                      |
 | -64 to INT_MIN | `EHANDLER`    | Handler function returned an error (multiplied by argument position) |
