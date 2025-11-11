@@ -1,110 +1,287 @@
-# CLI Argument Dispatcher Library
-
-A robust, lightweight, and extensible command line argument dispatcher in C, designed to efficiently parse, validate, and handle CLI arguments with minimal overhead while supporting **switch-type** and **value-based arguments**.
-
-> **Versioning Note:**  
-> - **v2** is intended for direct use in user programs — all CLI arguments are fully handled by this library.  
-> - **v3** (upcoming) is for library development — it allows the library to handle a subset of CLI arguments while leaving the rest available for the user program. This ensures that programs using the library always have some CLI arguments reserved for library functionality, while still providing flexibility for the user’s own argument handling.
 
 ---
 
-## Overview
+```markdown
+# CLI Argument Dispatcher for C
 
-This library provides a structured framework to:
-
-- Define and register CLI arguments (`-arg`, `-arg=X`) and their corresponding handler functions.
-- Validate arguments for correctness and detect duplicates before execution.
-- Dispatch the correct handler functions based on the passed arguments.
-- Provide clear, descriptive error messages for invalid, unknown, or duplicate arguments.
+A **lightweight, modular, and extensible command-line argument parser** for C programs, supporting both **switch-style arguments** (`-arg`) and **key-value arguments** (`-arg=value`). It also provides **argument reuse control, validation, and optional logging**.
 
 ---
 
-## Features & Advantages
+## Features
 
-### 1. Efficient Argument Tracking
-
-Uses a lightweight array-based “relation” system to:
-
-- Track which arguments are present
-- Detect duplicates
-- Avoid repeated string comparisons
-
-This ensures **fast argument validation and dispatch** even for multiple CLI arguments.
+- **Dual Argument Types**: Handle both switches (`-arg`) and key-value pairs (`-arg=value`).
+- **Reusability Control**: Decide per argument whether it can be reused, and how many times.
+- **Robust Validation**: Detect unknown arguments, duplication, or misuse before any handler executes.
+- **Extensible Handlers**: Separate file for implementing argument handlers with private macros/variables.
+- **Efficient Memory Usage**: Uses **bitfields** in structs to reduce memory footprint.
+- **Optional Logging**: Toggle debug logs with a compile-time macro `LOG_ENABLE`.
+- **Zero Dependencies**: Uses only standard C library functions.
 
 ---
 
-### 2. Switch and Value-Based Argument Support
+## Project Structure
 
-Supports two types of arguments:
+```
 
-- **Switch arguments:** `-arg1`  
-  → Executes the handler directly.
+cli_arg_proc.h      # Public API and documentation
+cli_arg_proc.c      # Dispatcher implementation
+handlers.h          # Handler prototypes, shared macros, and error codes
+handlers.c          # Handler function implementations and private definitions
 
-- **Value-based arguments:** `-arg2=X`  
-  → Passes the value `X` to the handler for processing (`int`, `float`, `string`, etc.).
+````
 
-This allows flexible and dynamic argument handling without complicating the library.
+### Responsibilities
 
----
-
-### 3. Pre-Validation Before Execution
-
-All arguments are validated before any handler runs:
-
-- Detects unknown arguments
-- Detects duplicates
-- Provides comprehensive error messages
-
-Prevents inconsistent program states and ensures robust operation.
+| File | Responsibility | Notes |
+|------|----------------|-------|
+| `cli_arg_proc.h` | Declares `cli_arg_dispatcher()`; guides users on customization | Public API |
+| `cli_arg_proc.c` | Implements parsing, validation, and dispatch; contains private structs and macros | Internal logic |
+| `handlers.h` | Exposes handler prototypes, shared macros (`LOG_ENABLE`) and generic error codes | Shared between dispatcher and handlers |
+| `handlers.c` | Implements handler functions and private macros/variables | Private to handler logic |
 
 ---
 
-### 4. Clear Error Codes and Messaging
+## How It Works
 
-Standardized return codes allow precise error detection:
+The dispatcher works in **four stages**:
 
-| Code | Meaning                  |
-|------|-------------------------|
-| 0    | Success                 |
-| -1   | Invalid argument        |
-| -2   | Duplicate argument      |
-| -3   | Handler function failed |
+1. **Parsing**  
+   CLI arguments are read from `argv[1]..argv[argc-1]` and compared with the `ARGS[]` table.
 
-All errors are accompanied by **descriptive messages** to guide users.
+2. **Validation**  
+   - Unknown arguments are flagged.
+   - Duplicate arguments are checked against reuse rules.
+   - Misuse is detected if argument usage exceeds the allowed count.
 
----
+3. **Relation Mapping**  
+   Creates a `relation[]` array that maps each valid CLI argument to its corresponding `ARGS[]` entry.
 
-### 5. Extensible and Maintainable
-
-Adding new arguments requires only:
-
-- Adding the new argument to the `cli_arg_table`.
-- Adding the corresponding handler function in the `fptr_arr` array.
-
-No external dependencies or complex parser logic — purely standard C (`stdio.h`, `string.h`).
+4. **Dispatch**  
+   Each validated argument calls its handler function:
+   - **Switch argument** → `NULL` pointer.
+   - **Value argument** → Pointer to the character after `=`.
 
 ---
 
-### 6. Duplicate Detection and Validation
+## Argument Format
 
-Tracks duplicates using the “relation” array. If a duplicate is detected:
-
-- The offending argument is flagged.
-- An error is returned, preventing handlers from executing in an inconsistent state.
-
----
-
-## Usage Notes: v2 vs v3
-
-- **v2:** For direct use in user programs. All CLI arguments passed to the program are handled by the library. Ideal when you want full argument management via this API.  
-- **v3 (upcoming):** Designed for library development. Only a subset of CLI arguments is handled by the library; remaining arguments are left available for the user program. This guarantees that every user program using the library will always have some CLI arguments available for its own purposes.
+| Type | Example | Passed to Handler |
+|------|---------|-----------------|
+| Switch | `-arg1` | `NULL` |
+| Key-Value | `-arg2=value` | Pointer to `"value"` |
 
 ---
 
-## Example CLI Usage (v2)
+## Usage Example
+
+```c
+#include "cli_arg_proc.h"
+
+int main(int argc, char** argv) {
+    int status = cli_arg_dispatcher(argc, argv);
+    
+    if (status < 0) {
+        // Handle errors here
+        return status;
+    }
+    
+    return 0;
+}
+````
+
+### Command-Line Examples
 
 ```bash
-./myapp -arg1
-./myapp -arg2=42
-./myapp -arg3=hello
+# Single switch
+./program -arg1
+
+# Single key-value
+./program -arg2=myvalue
+
+# Multiple arguments
+./program -arg1 -arg2=value -arg3
+
+# Reusable argument (if allowed in ARGS)
+./program -arg2=val1 -arg2=val2 -arg2=val3
+```
+
+---
+
+## Customization
+
+All **modifiable sections** are marked with `[---MODIFIABLE---]` in the source files.
+
+### 1. Implement a New Handler
+
+**In `handlers.c`:**
+
+```c
+int func_argX(void* ptr) {
+    if (ptr == NULL) {} // add if you are implementing value type argument else can skip
+    return 0;
+}
+```
+
+### 2. Declare Handler Prototype
+
+**In `handlers.h`:**
+
+```c
+int func_argX(void* ptr);
+```
+
+### 3. Add Argument Macro
+
+**In `cli_arg_proc.c`:**
+
+```c
+#define ARG4 "-arg4"  /* [---MODIFIABLE---] */
+```
+
+### 4. Add Argument Entry to `ARGS[]`
+
+```c
+static struct argbox ARGS[CLI_ARG_COUNT] = {
+    { .arg_str=ARG1, .arg_str_size=SIZEOF_CSTR(ARG1), .arg_fptr=func_arg1,
+      .arg_reuse=!REUSE_ENABLE, .arg_reuse_count=0, .arg_use_check=0, .arg_misuse=0 },
+
+    { .arg_str=ARG2, .arg_str_size=SIZEOF_CSTR(ARG2), .arg_fptr=func_arg2,
+      .arg_reuse=REUSE_ENABLE, .arg_reuse_count=5, .arg_use_check=0, .arg_misuse=0 },
+
+    { .arg_str=ARG4, .arg_str_size=SIZEOF_CSTR(ARG4), .arg_fptr=func_argX,
+      .arg_reuse=!REUSE_ENABLE, .arg_reuse_count=0, .arg_use_check=0, .arg_misuse=0 },
+};
+```
+
+### 5. Update Argument Count
+
+```c
+#define CLI_ARG_COUNT 4  /* [---MODIFIABLE---] */
+```
+
+### 6. Adjust `MAX_IDX_COUNT` (Optional)
+
+```c
+#define MAX_IDX_COUNT 15  /* [---MODIFIABLE---] */
+// Options: 7 → 128 args, 15 → 32K args, 23, 31... (8n-1 sequence)
+```
+
+### 7. Enable/Disable Logging
+
+```c
+#define LOG_ENABLE TRUE  /* [---MODIFIABLE---] */
+```
+
+---
+
+## Error Handling
+
+| Code           | Macro         | Meaning                                                              |
+| -------------- | ------------- | -------------------------------------------------------------------- |
+| 0              | Success       | All arguments processed successfully                                 |
+| -1             | `EINVALARG`   | Unknown/invalid argument                                             |
+| -2             | `EARGMISUSED` | Argument used more than allowed                                      |
+| -64 to INT_MIN | `EHANDLER`    | Handler function returned an error (multiplied by argument position) |
+
+---
+
+## Core Structures
+
+### `struct argbox`
+
+Represents an argument specification:
+
+```c
+struct argbox {
+    const char* arg_str;              // Argument string
+    const short int arg_str_size;     // Length (excluding null terminator)
+    const int (*arg_fptr)(void*);     // Handler function
+    const unsigned int arg_reuse :1;  // Allow reuse
+    const unsigned int arg_reuse_count :7;  // Max reuse (0-127)
+    int arg_use_check :7;             // Tracks usage
+    unsigned int arg_misuse :1;       // Misuse flag
+};
+```
+
+### `struct relation`
+
+Maps CLI arguments to `ARGS[]` indices:
+
+```c
+struct relation {
+    unsigned int rel_err :1;          // Error flag
+    unsigned int rel_idx :MAX_IDX_COUNT;  // Index in ARGS[]
+};
+```
+
+---
+
+## Design Highlights
+
+* **No Invalid States**: Arguments validated before handler dispatch.
+* **Memory Efficient**: Uses bitfields.
+* **Flexible Logging**: Can enable/disable debug messages at compile time.
+* **Fine-Grained Reuse Control**: Per-argument reuse limits.
+* **Extensible**: Easy to add new handlers and arguments.
+
+---
+
+## Building
+
+```bash
+gcc -o program cli_arg_proc.c handlers.c main.c
+```
+
+Disable logging for production:
+
+```bash
+# Edit handlers.h: #define LOG_ENABLE FALSE
+gcc -O2 -o program cli_arg_proc.c handlers.c main.c
+```
+
+---
+
+## Example Handler
+
+```c
+int func_arg2(void* ptr2) {
+    if (ptr2 == NULL) {
+        fprintf(stderr, "Error: arg2 requires a value\n");
+        return -1;
+    }
+
+    char* value = (char*)ptr2;
+    LOG_MSG("Processing arg2: %s\n", value);
+
+    // Your custom logic here
+    return 0;
+}
+```
+
+---
+
+## Important Notes
+
+* Always initialize `arg_use_check` and `arg_misuse` to `0`.
+* `argv[0]` (program name) is ignored.
+* Handlers must return `0` on success, negative values on failure.
+* Value arguments receive a pointer **after `=`**.
+* Argument strings must include the leading `-`.
+
+---
+
+
+---
+
+## Author
+
+[PIYUSH CHOUDHARY/mercmerc961@gmail.com]
+
+```
+
+---
+
+
+
 
