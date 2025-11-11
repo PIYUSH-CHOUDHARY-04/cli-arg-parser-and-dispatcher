@@ -4,7 +4,7 @@
 ```markdown
 # CLI Argument Dispatcher for C
 
-A **lightweight, modular, and extensible command-line argument parser** for C programs, supporting both **switch-style arguments** (`-arg`) and **key-value arguments** (`-arg=value`). It also provides **argument reuse control, validation, and optional logging**.
+A *lightweight, modular, and extensible command-line argument parser* for C programs, supporting both **switch-style arguments** (`-arg`) and **key-value arguments** (`-arg=value`). It also provides **argument reuse control, validation, and optional logging**.
 
 ---
 
